@@ -4,6 +4,10 @@ A build attempt where the basic just works for the BananaPi R4
 
 WIP
 
+## How to run:
+
+`docker-compose build`
+
 ### Thank you to:
 https://forum.openwrt.org/t/banana-bpi-r4-all-related-to-mtk-sdk/221080/
 

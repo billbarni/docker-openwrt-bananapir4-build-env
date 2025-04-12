@@ -4,8 +4,6 @@ services:
       context: .
     image: openwrt-builder
     volumes:
-      - ./output:/home/openwrt/bin
-      - ./openwrt:/home/openwrt
-      - ./mtk-openwrt-feeds:/home/mtk-openwrt-feeds
+      - ./output:/home/output
     stdin_open: true
     tty: true
