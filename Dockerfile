@@ -33,17 +33,24 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
   apt-get install -y \
   build-essential \
+  clang \
+  flex \
+  bison \
+  g++ \
+  gawk \
+  gcc-multilib \
+  g++-multilib \
+  gettext \
   git \
   libncurses5-dev \
   libssl-dev \
-  zlib1g-dev \
-  gawk \
-  subversion \
-  mercurial \
-  wget \
-  unzip \
-  file \
+  python3-setuptools \
   rsync \
+  swig \
+  unzip \
+  zlib1g-dev \
+  file \
+  wget \
   && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory
@@ -53,9 +60,6 @@ WORKDIR /home
 COPY --from=clone_stage /home/files files
 COPY --from=clone_stage /home/openwrt openwrt
 COPY --from=clone_stage /home/mtk-openwrt-feeds mtk-openwrt-feeds
-
-# Update and install all feeds
-RUN openwrt/scripts/feeds update -a && openwrt/scripts/feeds install -a
 
 # copy tx_power patch from 'files' to 'mtk-openwrt-feeds'
 RUN \cp -r files/my_files/99999_tx_power_check.patch mtk-openwrt-feeds/autobuild/unified/filogic/mac80211/24.10/files/package/kernel/mt76/patches/
@@ -69,7 +73,7 @@ RUN sed -i 's/CONFIG_PACKAGE_perf=y/# CONFIG_PACKAGE_perf is not set/' mtk-openw
 RUN \cp -r files/my_files/wozi-mt7988a.dtsi openwrt/target/linux/mediatek/files-6.6/arch/arm64/boot/dts/mediatek/mt7988a.dtsi
 
 RUN \cp -af mtk-openwrt-feeds/master/files/* openwrt
-RUN \cp -rf mtk-openwrt-feeds/autobuild/autobuild_5.4_mac80211_release/* openwrt
+RUN \cp -rf mtk-openwrt-feeds/autobuild/unified/* openwrt
 
 # qmi modems extension
 #RUN \cp -r files/my_files/luci-app-3ginfo-lite-main/sms-tool/ openwrt/feed/packages/utils/sms-tool
@@ -90,12 +94,15 @@ RUN cd openwrt && \
        patch -f -p1 -i "$file"; \
    done
 
+# Update and install all feeds
+RUN openwrt/scripts/feeds update -a && openwrt/scripts/feeds install -a
+
 # (Optional) Run the default configuration to ensure consistency
 RUN cd openwrt; bash lede-build-sanity.sh; cd -;
 
 # Start the build process using all available CPU cores.
 # Adjust '-j$(nproc)' based on your system’s available cores.
-RUN cd openwrt; make V=s PKG_HASH=skip PKG_MIRROR_HASH=skip -j$(nproc); cd -;
+RUN cd openwrt; make V=sc PKG_HASH=skip PKG_MIRROR_HASH=skip -j1
 #RUN make -j$(nproc)
 
 # Optionally expose a volume so you can retrieve the build artifacts later.
