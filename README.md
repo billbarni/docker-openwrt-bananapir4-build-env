@@ -8,6 +8,10 @@ WIP
 
 `docker-compose build`
 
+`docker-compose up -d`
+
+`docker exec -it docker-openwrt-bananapir4-build-env-openwrt-builder-1 bash`
+
 ### Thank you to:
 https://forum.openwrt.org/t/banana-bpi-r4-all-related-to-mtk-sdk/221080/
 
