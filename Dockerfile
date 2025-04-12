@@ -76,11 +76,13 @@ RUN \cp -af mtk-openwrt-feeds/master/files/* openwrt
 RUN \cp -rf mtk-openwrt-feeds/autobuild/unified/* openwrt
 
 # qmi modems extension
-#RUN \cp -r files/my_files/luci-app-3ginfo-lite-main/sms-tool/ openwrt/feed/packages/utils/sms-tool
-#RUN \cp -r files/my_files/luci-app-3ginfo-lite-main/luci-app-3ginfo-lite/ openwrt/feed/luci/applications
-#RUN \cp -r files/my_files/luci-app-modemband-main/luci-app-modemband/ openwrt/feed/luci/applications
-#RUN \cp -r files/my_files/luci-app-modemband-main/modemband/ openwrt/feed/packages/net/modemband
-#RUN \cp -r files/my_files/luci-app-at-socat/ openwrt/feed/luci/applications
+RUN \cp -r files/my_files/luci-app-3ginfo-lite-main/sms-tool/ openwrt/feed/packages/utils/sms-tool
+RUN \cp -r files/my_files/luci-app-3ginfo-lite-main/luci-app-3ginfo-lite/ openwrt/feed/luci/applications
+RUN \cp -r files/my_files/luci-app-modemband-main/luci-app-modemband/ openwrt/feed/luci/applications
+RUN \cp -r files/my_files/luci-app-modemband-main/modemband/ openwrt/feed/packages/net/modemband
+RUN \cp -r files/my_files/luci-app-at-socat/ openwrt/feed/luci/applications
+
+RUN cd openwrt; bash autobuild.sh filogic-mac80211-bpi-r4 log_file=make
 
 # If you have a pre-made configuration file, copy it into the container.
 # Place your ".config" file in the same directory as the Dockerfile.
