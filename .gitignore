@@ -1,0 +1,8 @@
+openwrt
+mtk-openwrt-feeds
+
+openwrt/
+mtk-openwrt-feeds/
+
+/openwrt/
+/mtk-openwrt-feeds/

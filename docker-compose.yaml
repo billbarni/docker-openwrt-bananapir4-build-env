@@ -1,0 +1,11 @@
+services:
+  openwrt-builder:
+    build:
+      context: .
+    image: openwrt-builder
+    volumes:
+      - ./output:/home/openwrt/bin
+      - ./openwrt:/home/openwrt
+      - ./mtk-openwrt-feeds:/home/mtk-openwrt-feeds
+    stdin_open: true
+    tty: true
