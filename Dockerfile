@@ -90,14 +90,12 @@ RUN cd openwrt && \
        patch -f -p1 -i "$file"; \
    done
 
-RUN bash lede-build-sanity.sh
-
 # (Optional) Run the default configuration to ensure consistency
-RUN make defconfig
+RUN cd openwrt; bash lede-build-sanity.sh; cd -;
 
 # Start the build process using all available CPU cores.
 # Adjust '-j$(nproc)' based on your system’s available cores.
-RUN make V=s PKG_HASH=skip PKG_MIRROR_HASH=skip -j$(nproc)
+RUN cd openwrt; make V=s PKG_HASH=skip PKG_MIRROR_HASH=skip -j$(nproc); cd -;
 #RUN make -j$(nproc)
 
 # Optionally expose a volume so you can retrieve the build artifacts later.
