@@ -10,3 +10,5 @@ https://forum.openwrt.org/t/banana-bpi-r4-all-related-to-mtk-sdk/221080/
 https://github.com/woziwrt/MTK-BPI-R4/
 
 https://github.com/mwarning/docker-openwrt-build-env
+
+https://git01.mediatek.com/plugins/gitiles/openwrt/feeds/mtk-openwrt-feeds/

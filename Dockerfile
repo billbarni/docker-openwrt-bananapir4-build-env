@@ -67,14 +67,12 @@ RUN sed -i 's/CONFIG_PACKAGE_perf=y/# CONFIG_PACKAGE_perf is not set/' mtk-openw
 # thermal zone addition
 RUN \cp -r files/my_files/wozi-mt7988a.dtsi openwrt/target/linux/mediatek/files-6.6/arch/arm64/boot/dts/mediatek/mt7988a.dtsi
 
-RUN \cp -af mtk-openwrt-feeds/master/files/* openwrt
-RUN \cp -rf mtk-openwrt-feeds/autobuild/unified openwrt/autobuild
-
-RUN cd openwrt
-
 # why patches never find files to patch?
-RUN for file in $(find /home/mtk-openwrt-feeds/master/patches-base -name "*.patch" | sort); do patch -f -p1 -i ${file}; done
+RUN cd openwrt
+RUN for file in $(find /home/mtk-openwrt-feeds/master/patches-base -name "*.patch" | sort); do patch -f -p1 -i ${file}; done;
 
+RUN \cp -af mtk-openwrt-feeds/master/files/* .
+RUN \cp -rf mtk-openwrt-feeds/autobuild/unified ./autobuild
 RUN bash /autobuild/autobuild.sh filogic-mac80211-bpi-r4 log_file=make
 
 # qmi modems extension
