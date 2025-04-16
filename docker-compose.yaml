@@ -4,6 +4,6 @@ services:
       context: .
     image: openwrt-builder
     volumes:
-      - ./output:/home/output
+      - ./output:/output
     stdin_open: true
     tty: true

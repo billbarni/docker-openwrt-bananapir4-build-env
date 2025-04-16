@@ -1,111 +1,66 @@
 FROM alpine:latest AS clone_stage
-################################################################ CLONE STAGE
+################################################################
+# CLONE STAGE
 ################################################################
 
 # Install git and any other tools you might need, like bash
 RUN apk update && apk add --no-cache git bash
 
-# Set the working directory
-WORKDIR /home
-
 # Copy local config files and patches
-COPY files files/
+COPY configs configs
+COPY my_files my_files
+COPY bpi-r4-openwrt-builder_1.sh bpi-r4-openwrt-builder_1.sh
+COPY bpi-r4-openwrt-builder_2.sh bpi-r4-openwrt-builder_2.sh
 
 # Clone the OpenWrt repository
 RUN git clone --branch openwrt-24.10 https://git.openwrt.org/openwrt/openwrt.git openwrt || true
-RUN cd openwrt; git checkout 56559278b78900f6cae5fda6b8d1bb9cda41e8bf; cd -;	
+RUN cd openwrt; git checkout a51b1a98e026887ea4dd8f09a6fdc8138941e2ac; cd -;
 
 # Clone the Mediatek OpenWrt feeds repository
 RUN git clone --branch master https://git01.mediatek.com/openwrt/feeds/mtk-openwrt-feeds || true
-RUN cd mtk-openwrt-feeds; git checkout 6356091a0f7dd3d02afadaa9b604aa8d74267018; cd -;
+RUN cd mtk-openwrt-feeds; git checkout d97c445b5a0a6848686d1811003f84ffb5d3d1bf; cd -;
+
+RUN echo "d97c445" > mtk-openwrt-feeds/autobuild/unified/feed_revision
 
 RUN cd openwrt
 RUN echo "src-git mtk_openwrt_feed https://git01.mediatek.com/openwrt/feeds/mtk-openwrt-feeds" >> feeds.conf.default
 
-FROM ubuntu:24.04 AS build_stage
-################################################################ BUILD STAGE
+FROM debian:latest AS config_stage
+################################################################
+# CONFIG STAGE
 ################################################################
 
-# Disable interactive prompts during package installation
-ENV DEBIAN_FRONTEND=noninteractive
+# Update package list, upgrade packages, and install dependencies
+RUN apt-get update && apt-get upgrade -y && \
+    apt-get install -y build-essential clang flex bison g++ gawk \
+    gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev \
+    python3-setuptools rsync swig unzip zlib1g-dev file wget && \
+    rm -rf /var/lib/apt/lists/*
 
-# Update the package list and install dependencies
-RUN apt-get update && \
-  apt-get install -y \
-  build-essential \
-  clang \
-  flex \
-  bison \
-  g++ \
-  gawk \
-  gcc-multilib \
-  g++-multilib \
-  gettext \
-  git \
-  libncurses5-dev \
-  libssl-dev \
-  python3-setuptools \
-  rsync \
-  swig \
-  unzip \
-  zlib1g-dev \
-  file \
-  wget \
-  && rm -rf /var/lib/apt/lists/*
+# Create a non-root user called "builder" and set up its home directory.
+# The flag -m creates the home directory automatically.
+RUN useradd -m builder
 
-# Set the working directory
-WORKDIR /home
+# Copy necessary files from clone_stage
+COPY --from=clone_stage configs configs
+COPY --from=clone_stage my_files my_files
+COPY --from=clone_stage bpi-r4-openwrt-builder_1.sh bpi-r4-openwrt-builder_1.sh
+COPY --from=clone_stage bpi-r4-openwrt-builder_2.sh bpi-r4-openwrt-builder_2.sh
+COPY --from=clone_stage openwrt openwrt
+COPY --from=clone_stage mtk-openwrt-feeds mtk-openwrt-feeds
 
-# Copy necessary files from clone_stage. hopefully to allow chaching?
-COPY --from=clone_stage /home/files files
-COPY --from=clone_stage /home/openwrt openwrt
-COPY --from=clone_stage /home/mtk-openwrt-feeds mtk-openwrt-feeds
+# Change ownership of the files and directories so that the new user can access and modify them.
+# Adjust the directories/files below if your build requires other paths.
+RUN chown -R builder:builder configs my_files bpi-r4-openwrt-builder_1.sh \
+    bpi-r4-openwrt-builder_2.sh openwrt mtk-openwrt-feeds
 
-# copy tx_power patch from 'files' to 'mtk-openwrt-feeds'
-RUN \cp -r files/my_files/99999_tx_power_check.patch mtk-openwrt-feeds/autobuild/unified/filogic/mac80211/24.10/files/package/kernel/mt76/patches/
+# Switch to the non-root user and set the working directory within their home folder.
+USER builder
+WORKDIR /home/builder
 
-# removing iperf issue
-RUN sed -i 's/CONFIG_PACKAGE_perf=y/# CONFIG_PACKAGE_perf is not set/' mtk-openwrt-feeds/autobuild/unified/filogic/mac80211/24.10/defconfig
-RUN sed -i 's/CONFIG_PACKAGE_perf=y/# CONFIG_PACKAGE_perf is not set/' mtk-openwrt-feeds/autobuild/autobuild_5.4_mac80211_release/mt7988_wifi7_mac80211_mlo/.config
-RUN sed -i 's/CONFIG_PACKAGE_perf=y/# CONFIG_PACKAGE_perf is not set/' mtk-openwrt-feeds/autobuild/autobuild_5.4_mac80211_release/mt7986_mac80211/.config
+# Run the builder scripts as the non-root user.
+RUN bash bpi-r4-openwrt-builder_1.sh
+RUN bash bpi-r4-openwrt-builder_2.sh
 
-# thermal zone addition
-RUN \cp -r files/my_files/wozi-mt7988a.dtsi openwrt/target/linux/mediatek/files-6.6/arch/arm64/boot/dts/mediatek/mt7988a.dtsi
-
-RUN \cp -af mtk-openwrt-feeds/master/files/* openwrt
-RUN \cp -rf mtk-openwrt-feeds/autobuild/unified/* openwrt
-
-# qmi modems extension
-RUN \cp -r files/my_files/luci-app-3ginfo-lite-main/sms-tool/ openwrt/feed/packages/utils/sms-tool
-RUN \cp -r files/my_files/luci-app-3ginfo-lite-main/luci-app-3ginfo-lite/ openwrt/feed/luci/applications
-RUN \cp -r files/my_files/luci-app-modemband-main/luci-app-modemband/ openwrt/feed/luci/applications
-RUN \cp -r files/my_files/luci-app-modemband-main/modemband/ openwrt/feed/packages/net/modemband
-RUN \cp -r files/my_files/luci-app-at-socat/ openwrt/feed/luci/applications
-
-RUN cd openwrt; bash autobuild.sh filogic-mac80211-bpi-r4 log_file=make
-
-# If you have a pre-made configuration file, copy it into the container.
-# Place your ".config" file in the same directory as the Dockerfile.
-# If you do not have one, the build process will generate defaults.
-RUN \cp files/configs/config.beta4.ext openwrt/.config
-
-# Change to the 'openwrt' directory and apply each patch found in /mtk-openwrt-feeds/master/patches-base
-RUN cd openwrt && \
-   for file in $(find /home/mtk-openwrt-feeds/master/patches-base -name "*.patch" | sort); do \
-       echo "Applying patch: $file"; \
-       patch -f -p1 -i "$file"; \
-   done
-
-# Update and install all feeds
-RUN openwrt/scripts/feeds update -a && openwrt/scripts/feeds install -a
-
-# (Optional) Run the default configuration to ensure consistency
-RUN cd openwrt; bash lede-build-sanity.sh; cd -;
-
-# Start the build process using all available CPU cores.
-# Adjust '-j$(nproc)' based on your system’s available cores.
-RUN cd openwrt; make V=sc PKG_HASH=skip PKG_MIRROR_HASH=skip -j1
-#RUN make -j$(nproc)
-
-# Optionally expose a volume so you can retrieve the build artifacts later.
-# The compiled firmware will usually be found in the "bin" directory.
+# Copy the final output (if needed)
+RUN cp -r openwrt/bin/ output

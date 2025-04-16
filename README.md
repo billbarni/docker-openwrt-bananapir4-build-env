@@ -1,22 +1,21 @@
-# OpenWRT 24.10 Docker Image Builder For BananaPi R4
-
-A build attempt where the basic just works for the BananaPi R4
-
-WIP
-
-## How to run:
-
-`docker-compose build`
-
-`docker-compose up -d`
-
-`docker exec -it docker-openwrt-bananapir4-build-env-openwrt-builder-1 bash`
-
-### Thank you to:
-https://forum.openwrt.org/t/banana-bpi-r4-all-related-to-mtk-sdk/221080/
-
-https://github.com/woziwrt/MTK-BPI-R4/
-
-https://github.com/mwarning/docker-openwrt-build-env
-
-https://git01.mediatek.com/plugins/gitiles/openwrt/feeds/mtk-openwrt-feeds/
+# bpi-r4-openwrt-builder
+ 
+ >git clone ht<span>tps://github.com/woziwrt/bpi-r4-openwrt-builder.git
+ 
+ >chmod 776 -R bpi-r4-openwrt-builder
+ 
+ >cd bpi-r4-openwrt-builder
+ 
+ BEFORE RUNNING BUILDER READ ALL COMMENTS IN THE SCRIPT !
+ 
+ >./bpi-r4-openwrt-builder.sh
+ 
+ 
+ Notes for those who want to create their own experimental releases:
+- use only VERIFIED mainline openwrt commits
+- not all mtk  commits on their git are fully functional and each other compatible
+  with mainline openwrt commits and can require additional patching for successful 
+  build
+ 
+  
+ Tested on VMware Fusion, Workstation and Hyper-V
